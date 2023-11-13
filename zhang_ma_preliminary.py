@@ -1,8 +1,10 @@
+from tslearn.clustering import TimeSeriesKMeans
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import ast
+import scipy.stats
 mpl.rcParams['font.size'] = 14
 
 # %%
@@ -17,7 +19,8 @@ data_relevant = data[['SUB_INDEX_194',
                       'delta progress',
                       'cumulative progress',
                       'way_allocate_time',
-                      'TextReport_cause_procrastination']]
+                      'TextReport_cause_procrastination',
+                      'GPS_student']]
 
 data_relevant = data_relevant.dropna(subset=['delta progress'])
 data_relevant = data_relevant.reset_index(drop=True)
@@ -29,6 +32,8 @@ for i in range(len(data_relevant)):
     ))
 semester_length = len(ast.literal_eval(
     data_relevant['delta progress'][0]))
+
+# %%
 
 # who completed lesser than 7 hrs, when did they do their credits
 participants_less7 = data_relevant[data_relevant['Total credits'] < 7]
@@ -42,6 +47,7 @@ for i in range(len(participants_less7)):
 plt.legend(frameon=False, title='sub index')
 plt.ylabel('cumulative credits completed')
 plt.xlabel('day in semester')
+
 
 # why do participants 24, 55, 126 not finish 7 credits
 with pd.option_context('display.max_colwidth', 200):
@@ -57,6 +63,7 @@ with pd.option_context('display.max_colwidth', 200):
 data_relevant = data_relevant.drop([1, 90, 104])
 data_relevant = data_relevant.reset_index(drop=True)
 
+# %%
 # when they hit 7 hr mark vs number of credits completed
 # hypothesis: those who completed 7 hr later don't have much time to complete
 # more credits (so lose out due to procrastination)
@@ -71,8 +78,49 @@ for i in range(len(data_relevant)):
     else:
         when_hit_7.append(np.nan)
 data_relevant['when hit 7 credits'] = when_hit_7
+
+plt.figure()
 plt.scatter(data_relevant['when hit 7 credits'],
             data_relevant['Total credits'])
 plt.xlabel('day when 7 credits are hit')
 plt.ylabel('total credits completed')
+temp = data_relevant[['when hit 7 credits', 'Total credits']].dropna()
+print(scipy.stats.pearsonr(temp['when hit 7 credits'],
+                           temp['Total credits']))
+
+plt.figure()
+plt.scatter(data_relevant['GPS_student'],
+            data_relevant['Total credits'])
+plt.xlabel('GPS ')
+plt.ylabel('total credits completed')
+temp = data_relevant[['GPS_student', 'Total credits']].dropna()
+print(scipy.stats.pearsonr(temp['GPS_student'],
+                           temp['Total credits']))
+
+# %%
 # cluster sequences (unit completion times)
+
+# normalise cumulative series
+cumulative_normalised = []
+for i in range(len(data_relevant)):
+    temp = np.array(
+        ast.literal_eval(data_relevant['cumulative progress'][i]))
+    cumulative_normalised.append(temp/data_relevant['Total credits'][i])
+data_relevant['cumulative progress normalised'] = cumulative_normalised
+
+km = TimeSeriesKMeans(n_clusters=7, metric="softdtw")
+timseries_to_cluster = np.vstack(
+    data_relevant['cumulative progress normalised'])
+labels = km.fit_predict(timseries_to_cluster)
+data_relevant['labels'] = labels
+
+for label in set(labels):
+    plt.figure()
+
+    for i in range(len(data_relevant)):
+
+        if data_relevant['labels'][i] == label:
+            # ast.literal_eval(data_relevant['delta progress'][i])
+            # data_relevant['cumulative progress normalised'][i]
+            plt.plot(ast.literal_eval(data_relevant['delta progress'][i]),
+                     alpha=0.5)
