@@ -108,7 +108,7 @@ for i in range(len(data_relevant)):
     cumulative_normalised.append(temp/data_relevant['Total credits'][i])
 data_relevant['cumulative progress normalised'] = cumulative_normalised
 
-km = TimeSeriesKMeans(n_clusters=9, metric="softdtw")
+km = TimeSeriesKMeans(n_clusters=8, n_init=5, metric="euclidean", verbose=True)
 timseries_to_cluster = np.vstack(
     data_relevant['cumulative progress normalised'])
 labels = km.fit_predict(timseries_to_cluster)
@@ -122,8 +122,10 @@ for label in set(labels):
         if data_relevant['labels'][i] == label:
             # ast.literal_eval(data_relevant['delta progress'][i])
             # data_relevant['cumulative progress normalised'][i]
-            plt.plot(data_relevant['cumulative progress normalised'][i],
+            plt.plot(ast.literal_eval(data_relevant['cumulative progress'][i]),
                      alpha=0.5)
+
+# %%
 
 # what are the total credits for each of the clusters
 fig, ax = plt.subplots()
@@ -133,8 +135,9 @@ scatter = ax.scatter(data_relevant['when hit 7 credits'],
 ax.set_xlabel('day when 7 credits are hit')
 ax.set_ylabel('total credits completed')
 legend = ax.legend(*scatter.legend_elements(),
-                   loc="center right",
-                   bbox_to_anchor=(1.5, 0.5),
+                   bbox_to_anchor=(1.04, 1),
                    title="clusters")
 ax.add_artist(legend)
 plt.show()
+
+# what reasons did each of these clusters give themselves
