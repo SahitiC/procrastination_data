@@ -12,17 +12,23 @@ mpl.rcParams['font.size'] = 14
 data = pd.read_csv('zhang_ma/FollowUpStudymatrixDf_finalpaper.csv')
 
 # keep relevant data columns
-data_relevant = data[['SUB_INDEX_194',
-                      'Total credits',
-                      'date granted list',
-                      'credit list',
-                      'delta progress',
-                      'cumulative progress',
-                      'way_allocate_time',
-                      'TextReport_cause_procrastination',
-                      'GPS_student']]
+# data_relevant = data[['SUB_INDEX_194',
+#                       'Total credits',
+#                       'date granted list',
+#                       'credit list',
+#                       'delta progress',
+#                       'cumulative progress',
+#                       'way_allocate_time',
+#                       'TextReport_cause_procrastination',
+#                       'AcadeProcFreq_mean',
+#                       'ReasonProc_ExcitingLastMoment',
+#                       'ReasonProc_TimeManagement',
+#                       'ReasonProc_TaskAversiveness',
+#                       'ReasonProc_Laziness',
+#                       'RiskTakingScore',
+#                       'GPS_student']]
 
-data_relevant = data_relevant.dropna(subset=['delta progress'])
+data_relevant = data.dropna(subset=['delta progress'])
 data_relevant = data_relevant.reset_index(drop=True)
 
 # are all progress arrays the same length (an entry for each day of semester)
@@ -64,9 +70,7 @@ data_relevant = data_relevant.drop([1, 90, 104])
 data_relevant = data_relevant.reset_index(drop=True)
 
 # %%
-# when they hit 7 hr mark vs number of credits completed
-# hypothesis: those who completed 7 hr later don't have much time to complete
-# more credits (so lose out due to procrastination)
+
 when_hit_7 = []
 for i in range(len(data_relevant)):
 
@@ -88,14 +92,6 @@ temp = data_relevant[['when hit 7 credits', 'Total credits']].dropna()
 print(scipy.stats.pearsonr(temp['when hit 7 credits'],
                            temp['Total credits']))
 
-plt.figure()
-plt.scatter(data_relevant['GPS_student'],
-            data_relevant['Total credits'])
-plt.xlabel('GPS ')
-plt.ylabel('total credits completed')
-temp = data_relevant[['GPS_student', 'Total credits']].dropna()
-print(scipy.stats.pearsonr(temp['GPS_student'],
-                           temp['Total credits']))
 
 # %%
 # cluster sequences (unit completion times)
@@ -114,7 +110,7 @@ timseries_to_cluster = np.vstack(
 labels = km.fit_predict(timseries_to_cluster)
 data_relevant['labels'] = labels
 
-for label in set(labels):
+for label in set(data_relevant['labels']):
     plt.figure()
 
     for i in range(len(data_relevant)):
@@ -127,7 +123,9 @@ for label in set(labels):
 
 # %%
 
-# what are the total credits for each of the clusters
+# when they hit 7 hr mark vs number of credits completed
+# hypothesis: those who completed 7 hr later don't have much time to complete
+# more credits (so lose out due to procrastination)
 fig, ax = plt.subplots()
 scatter = ax.scatter(data_relevant['when hit 7 credits'],
                      data_relevant['Total credits'],
@@ -135,9 +133,77 @@ scatter = ax.scatter(data_relevant['when hit 7 credits'],
 ax.set_xlabel('day when 7 credits are hit')
 ax.set_ylabel('total credits completed')
 legend = ax.legend(*scatter.legend_elements(),
-                   bbox_to_anchor=(1.04, 1),
                    title="clusters")
 ax.add_artist(legend)
 plt.show()
 
-# what reasons did each of these clusters give themselves
+# do they also have high regret
+# it depends on cluster! low credits dont necessarily have high regret
+plt.figure()
+plt.scatter(data_relevant['SatifactionTimeAllocationWay'],
+            data_relevant['Total credits'],
+            c=data_relevant['labels'])
+plt.ylabel('total credits completed')
+plt.xlabel('satisfaction with time allocation')
+temp = data_relevant[['SatifactionTimeAllocationWay',
+                      'Total credits']].dropna()
+print(scipy.stats.pearsonr(temp['SatifactionTimeAllocationWay'],
+                           temp['Total credits']))
+
+plt.figure()
+plt.scatter(data_relevant['SatifactionTimeAllocationWay'],
+            data_relevant['when hit 7 credits'],
+            c=data_relevant['labels'])
+plt.ylabel('day when 7 credits are hit')
+plt.xlabel('satisfaction with time allocation')
+temp = data_relevant[['SatifactionTimeAllocationWay',
+                      'when hit 7 credits']].dropna()
+print(scipy.stats.pearsonr(temp['SatifactionTimeAllocationWay'],
+                           temp['when hit 7 credits']))
+
+# how do procrastination scores vary with cluster
+temp = data_relevant[['labels', 'AcadeProcFreq_mean']].groupby(
+    ['labels']).mean()
+temp_std = data_relevant[['labels', 'AcadeProcFreq_mean']].groupby(
+    ['labels']).std()
+temp.plot(kind='bar',
+          yerr=temp_std,
+          ylabel='Proc score mean',
+          xlabel='cluster',
+          legend=None)
+
+# what about risk-taking and procrastination reasons?
+variables = ['ReasonProc_ExcitingLastMoment',
+             'ReasonProc_TimeManagement',
+             'ReasonProc_TaskAversiveness',
+             'ReasonProc_Laziness',
+             'RiskTakingScore',
+             'DiscountRate_lnk',
+             'RiskAttitude_lnAlpha',
+             'SatifactionTimeAllocationWay']
+for i_v, v in enumerate(variables):
+    temp = data_relevant[['labels', v]].groupby(
+        ['labels']).mean()
+    temp_std = data_relevant[['labels', v]].groupby(
+        ['labels']).std()
+    temp.plot(kind='bar',
+              yerr=temp_std,
+              ylabel=v,
+              xlabel='cluster',
+              legend=None)
+
+# %%
+# save text responses
+label = 7
+temp = []
+for i in range(len(data_relevant)):
+
+    if data_relevant['labels'][i] == label:
+
+        temp.append(data_relevant['TextReport_cause_procrastination'][i])
+        # TextReport_cause_procrastination
+        # way_allocate_time
+
+with open('temp.txt', 'w') as f:
+    for i in temp:
+        f.write(f"{i}\n")
