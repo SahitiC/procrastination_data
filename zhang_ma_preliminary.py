@@ -11,23 +11,6 @@ mpl.rcParams['font.size'] = 14
 
 data = pd.read_csv('zhang_ma/FollowUpStudymatrixDf_finalpaper.csv')
 
-# keep relevant data columns
-# data_relevant = data[['SUB_INDEX_194',
-#                       'Total credits',
-#                       'date granted list',
-#                       'credit list',
-#                       'delta progress',
-#                       'cumulative progress',
-#                       'way_allocate_time',
-#                       'TextReport_cause_procrastination',
-#                       'AcadeProcFreq_mean',
-#                       'ReasonProc_ExcitingLastMoment',
-#                       'ReasonProc_TimeManagement',
-#                       'ReasonProc_TaskAversiveness',
-#                       'ReasonProc_Laziness',
-#                       'RiskTakingScore',
-#                       'GPS_student']]
-
 data_relevant = data.dropna(subset=['delta progress'])
 data_relevant = data_relevant.reset_index(drop=True)
 
@@ -36,6 +19,7 @@ for i in range(len(data_relevant)):
     print(len(
         ast.literal_eval(data_relevant['delta progress'][i])
     ))
+    plt.plot(ast.literal_eval(data_relevant['delta progress'][i]))
 semester_length = len(ast.literal_eval(
     data_relevant['delta progress'][0]))
 
@@ -193,7 +177,7 @@ for i_v, v in enumerate(variables):
               legend=None)
 
 # %%
-# save text responses
+# save text responses cluster-wise to .txt file
 label = 7
 temp = []
 for i in range(len(data_relevant)):
