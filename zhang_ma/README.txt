@@ -6,6 +6,7 @@ files:
 2. FollowUpStudymatrixDf_finalpaper.csv: raw data from 194 participants
 3. FollowUpStudymatrixDf_finalpaper_loose7Credit.csv: data from only participants who completed 7-7.5 credits
 4. final_paper_script.ipynb: script for paper plots/ results
+5. Designed questions and statements about research participation.pdf: contains info about framing of verbal questions etc
 
 columns:
 1. SUB_INDEX_194
