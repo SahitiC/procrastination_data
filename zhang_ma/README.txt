@@ -6,7 +6,6 @@ files:
 2. FollowUpStudymatrixDf_finalpaper.csv: raw data from 194 participants
 3. FollowUpStudymatrixDf_finalpaper_loose7Credit.csv: data from only participants who completed 7-7.5 credits
 4. final_paper_script.ipynb: script for paper plots/ results
-5. Designed questions and statements about research participation.pdf: contains info about framing of verbal questions etc
 
 columns:
 1. SUB_INDEX_194
@@ -31,7 +30,7 @@ choose only one of the options or fail straightfoward choices in the two tasks
 23-27. RiskTakingScore_Ethical, Finantial, HealthSafety, Recreational, Social: sub scores of risk taking scale
 28-33. RiskPerceptionScore, _Ethical, _Finantial, _HealthSafety, _Recreational, _Social: sub scores of risk perception scale
 34-39. PerfectionismScore_Frost_ConcernMistakes, _Douts, _PersonalStandard, _ParentalExpectation, _ParentalCriticism, _Organization: sub scores of perfectionism scale
-40-41. Maladaptive, Adaptive Perfectionism: Enns et al., 2001
+40-41. Maladaptive, Adaptive Perfectionism: follows Enns et al., 2001
 42-44. SatisfactionTimeAllocationWay, AffectiveRegretTimeAllocationWay, CognitiveRegretTimeAllocationWay
 45-49. AttributeProcInternal, Stable, Control, Mean: 
 50-53. ReasonProc_ExcitingLastMoment, TimeManagment, TaskAversiveness, Laziness: avg scores for each type of procrastination reasons
