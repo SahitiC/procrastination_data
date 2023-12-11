@@ -130,11 +130,9 @@ def forward_runs(policy, Q_values, actions, initial_state, horizon, states, T,
 
     for i_timestep in range(horizon):
 
-        # action at a state and timestep as given by policy
         actions_forward[i_timestep] = np.random.choice(
-            actions, p=policy(args,
-                              Q_values[states_forward[i_timestep]
-                                       [:, i_timestep]])
+            len(actions[states_forward[i_timestep]]), p=policy(
+                args, Q_values[states_forward[i_timestep]][:, i_timestep])
         )
 
         # next state given by transition probabilities

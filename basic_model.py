@@ -28,43 +28,44 @@ def get_reward_functions(states, reward_pass, reward_fail, reward_shirk,
     return reward_func, reward_func_last
 
 
-def get_reward_functions_immediate(states, reward_work, reward_shirk,
-                                   effort_work, effort_shirk):
-    """
-    construct reward function for immediate reward case
-    """
-    reward_func = []
-
-    # reward for actions (depends on current state and next state)
-    reward_func.append([np.array([effort_work, reward_work + effort_work, 0]),
-                        np.array([reward_shirk, 0, 0])])
-    reward_func.append([np.array([0, effort_work, reward_work + effort_work]),
-                        np.array([0, reward_shirk, 0])])
-    reward_func.append([np.array([0, 0, reward_shirk])])
-
-    # reward from final evaluation
-    reward_func_last = np.array([-1*reward_work, 0, 0])
-
-    return reward_func, reward_func_last
-
-
 def get_transition_prob(states, efficacy):
     """
     construct reward function for immediate reward case
     """
     T = []
 
-    # for 3 states:
-    T.append([np.array([1-efficacy, efficacy, 0]),
-              np.array([1, 0, 0])])  # transitions for work, shirk
-    T.append([np.array([0, 1-efficacy, efficacy]),
-              np.array([0, 1, 0])])  # transitions for work, shirk
-    T.append([np.array([0, 0, 1])])  # transitions for completed
+    for i in range(len(states)-1):
+        temp1 = np.zeros(len(states))
+        temp2 = np.zeros(len(states))
+        temp1[i] = 1-efficacy
+        temp1[i+1] = efficacy
+        temp2[i] = 1
+        T.append([temp1, temp2])
 
-#    # for 2 states:
-#    T[0] = [ np.array([1-efficacy, efficacy]),
-#             np.array([1, 0]) ] # transitions for work, shirk
-#    T[1] = [ np.array([0, 1]) ] # transitions for completed
+    temp1 = np.zeros(len(states))
+    temp1[i+1] = 1
+    T.append([temp1])
+
+    return T
+
+
+def get_transition_prob_decreasing(states, efficacy):
+    """
+    construct reward function for immediate reward case
+    """
+    T = []
+
+    for i in range(len(states)-1):
+        temp1 = np.zeros(len(states))
+        temp2 = np.zeros(len(states))
+        temp1[i] = 1-efficacy
+        temp1[i+1] = efficacy
+        temp2[i] = 1
+        T.append([temp1, temp2])
+
+    temp1 = np.zeros(len(states))
+    temp1[i+1] = 1
+    T.append([temp1])
 
     return T
 
@@ -75,28 +76,25 @@ def deterministic_policy(a):
 
 
 def softmax_policy(a, beta):
-    return a
+
+    return np.exp(beta*a) / sum(np.exp(beta*a))
 
 # %%
 # instantiate MDP
 
 
-# states of markov chain
-N_INTERMEDIATE_STATES = 1
-# intermediate + initial and finished states (2)
-STATES = np.arange(2 + N_INTERMEDIATE_STATES)
+# states of markov chain = units of tasks
+STATE_NO = 32+1  # state where nothing is done as an additional state
+STATES = np.arange(STATE_NO)
 
-# actions available in each state
-ACTIONS = np.full(len(STATES), np.nan, dtype=object)
-# actions for all but final state
-ACTIONS[:-1] = [['work', 'shirk']
-                for i in range(len(STATES)-1)]
-# actions for final state
-ACTIONS[-1] = ['completed']
+# action = decision to complete x (<remaining units) units
+ACTIONS = []
+ACTIONS = [np.arange(STATE_NO-i)
+           for i in range(len(STATES))]
 
-HORIZON = 10  # deadline
+HORIZON = 110  # no. of days for task
 DISCOUNT_FACTOR = 0.9  # discounting factor
-EFFICACY = 0.6  # self-efficacy (probability of progress on working)
+EFFICACY = 0.8  # efficacy (probability of progress on working)
 
 # utilities :
 REWARD_PASS = 4.0
@@ -111,8 +109,42 @@ reward_func, reward_func_last = get_reward_functions(
     STATES, REWARD_PASS, REWARD_FAIL, REWARD_SHIRK,
     REWARD_COMPLETED, EFFORT_WORK, EFFORT_SHIRK)
 
-T = get_transition_prob(STATES, EFFICACY)
+assumed_efficacy = 0.7
+
+T_assumed = get_transition_prob(STATES, assumed_efficacy)
 
 V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy(
     STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR,
-    reward_func, reward_func_last, T)
+    reward_func, reward_func_last, T_assumed)
+
+# plots of policies and values
+plt.figure(figsize=(8, 6))
+for i_state, state in enumerate(STATES):
+
+    # plt.plot(V_opt[i_state], label=f'V*{i_state}',
+    # marker=i_state+4, linestyle='--')
+    # plt.plot(policy_opt[i_state], label = 'policy*')
+
+    for i_action, action in enumerate(ACTIONS[i_state]):
+
+        plt.plot(Q_values[i_state][i_action, :], label=r'Q' +
+                 action, marker=i_state+4, linestyle='--')
+
+    plt.legend()
+
+# %%
+
+BETA = 10
+initial_state = 0
+d = np.zeros(HORIZON)
+
+T = get_transition_prob(STATES, EFFICACY)
+
+for i in range(10000):
+    s, a = mdp_algms.forward_runs(softmax_policy, Q_values, ACTIONS,
+                                  initial_state, HORIZON, STATES, T, BETA)
+    delta_progress = np.zeros(HORIZON)
+    delta_progress[np.where(s[:-1] < s[1:])[0]] = 1
+    d = d + delta_progress
+
+plt.plot(d/10000)

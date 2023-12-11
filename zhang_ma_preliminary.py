@@ -19,7 +19,8 @@ for i in range(len(data_relevant)):
     print(len(
         ast.literal_eval(data_relevant['delta progress'][i])
     ))
-    plt.plot(ast.literal_eval(data_relevant['delta progress'][i]))
+    plt.plot(ast.literal_eval(data_relevant['cumulative progress'][i]))
+
 semester_length = len(ast.literal_eval(
     data_relevant['delta progress'][0]))
 
