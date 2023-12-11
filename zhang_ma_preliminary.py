@@ -19,10 +19,44 @@ for i in range(len(data_relevant)):
     print(len(
         ast.literal_eval(data_relevant['delta progress'][i])
     ))
-    plt.plot(ast.literal_eval(data_relevant['cumulative progress'][i]))
+    plt.plot(ast.literal_eval(data_relevant['delta progress'][i]))
 
-semester_length = len(ast.literal_eval(
-    data_relevant['delta progress'][0]))
+semester_length = len(ast.literal_eval(data_relevant['delta progress'][0]))
+
+# %%
+# are weeks a better unit of time
+
+semester_length_weeks = round(semester_length/7)
+delta_progress_weeks = []
+plt.figure()
+
+# delta progress week wise
+for i in range(len(data_relevant)):
+
+    temp = ast.literal_eval(data_relevant['delta progress'][i])
+    temp_week = []
+    for i_week in range(semester_length_weeks):
+
+        temp_week.append(
+            sum(temp[i_week*7: (i_week+1)*7]) * 1.0)
+
+    assert sum(temp_week) == data_relevant['Total credits'][i]
+    delta_progress_weeks.append(temp_week)
+    plt.plot(temp_week)
+
+data_relevant['delta_progress_weeks'] = delta_progress_weeks
+
+# cumulative progress week wise
+cumulative_progress_weeks = []
+plt.figure()
+for i in range(len(data_relevant)):
+
+    cumulative_progress_weeks.append(
+        np.cumsum(data_relevant['delta_progress_weeks'][i]))
+    plt.plot(
+        np.cumsum(data_relevant['delta_progress_weeks'][i]))
+
+data_relevant['cumulative_progress_weeks'] = cumulative_progress_weeks
 
 # %%
 
@@ -95,6 +129,19 @@ timseries_to_cluster = np.vstack(
 labels = km.fit_predict(timseries_to_cluster)
 data_relevant['labels'] = labels
 
+# normalise cumulative series week-wise
+cumulative_normalised = []
+for i in range(len(data_relevant)):
+    temp = np.array(data_relevant['cumulative_progress_weeks'][i])
+    cumulative_normalised.append(temp/data_relevant['Total credits'][i])
+data_relevant['cumulative progress weeks normalised'] = cumulative_normalised
+
+km = TimeSeriesKMeans(n_clusters=8, n_init=5, metric="euclidean", verbose=True)
+timseries_to_cluster = np.vstack(
+    data_relevant['cumulative progress weeks normalised'])
+labels = km.fit_predict(timseries_to_cluster)
+data_relevant['labels'] = labels
+
 for label in set(data_relevant['labels']):
     plt.figure()
 
@@ -103,7 +150,7 @@ for label in set(data_relevant['labels']):
         if data_relevant['labels'][i] == label:
             # ast.literal_eval(data_relevant['delta progress'][i])
             # data_relevant['cumulative progress normalised'][i]
-            plt.plot(ast.literal_eval(data_relevant['cumulative progress'][i]),
+            plt.plot(data_relevant['cumulative_progress_weeks'][i],
                      alpha=0.5)
 
 # %%

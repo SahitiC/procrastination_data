@@ -30,7 +30,7 @@ choose only one of the options or fail straightfoward choices in the two tasks
 23-27. RiskTakingScore_Ethical, Finantial, HealthSafety, Recreational, Social: sub scores of risk taking scale
 28-33. RiskPerceptionScore, _Ethical, _Finantial, _HealthSafety, _Recreational, _Social: sub scores of risk perception scale
 34-39. PerfectionismScore_Frost_ConcernMistakes, _Douts, _PersonalStandard, _ParentalExpectation, _ParentalCriticism, _Organization: sub scores of perfectionism scale
-40-41. Maladaptive, Adaptive Perfectionism: Enns et al., 2001
+40-41. Maladaptive, Adaptive Perfectionism: follows Enns et al., 2001
 42-44. SatisfactionTimeAllocationWay, AffectiveRegretTimeAllocationWay, CognitiveRegretTimeAllocationWay
 45-49. AttributeProcInternal, Stable, Control, Mean: 
 50-53. ReasonProc_ExcitingLastMoment, TimeManagment, TaskAversiveness, Laziness: avg scores for each type of procrastination reasons
