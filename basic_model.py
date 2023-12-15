@@ -29,18 +29,6 @@ STATES_NO = 22+1  # one extra state for completing nothing
 STATES = np.arange(STATES_NO)
 
 # actions = no. of units to complete in each state
-# set maximum no. of units that can be finished in a day
-MAX_UNITS = 8
-ACTIONS = []
-for state_current in range(STATES_NO):
-
-    if state_current + MAX_UNITS <= STATES_NO-1:
-        units = MAX_UNITS
-    else:
-        units = STATES_NO-1-state_current
-
-    ACTIONS.append(np.arange(units+1))
-
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 

@@ -6,8 +6,8 @@ import numpy as np
 from scipy.stats import binom
 
 
-def reward_immediate_threshold(states, actions, reward_shirk, reward_thr,
-                               reward_extra):
+def reward_threshold(states, actions, reward_shirk, reward_thr,
+                     reward_extra):
     """
     reward function when units are rewarded immediately once threshold of
     14 units are hit (compensated at reward_thr per unit) and then reward_extra
@@ -97,6 +97,26 @@ def effort(states, actions, effort_work):
         for i, action in enumerate(actions[state_current]):
 
             effort_temp[action, :] = action * effort_work
+
+        effort_func.append(effort_temp)
+
+    return effort_func
+
+
+def effort_convex_concave(states, actions, effort_work, exponent):
+    """
+    immediate effort from actions, allowing not only linear but also concave
+    and convex costs as functions of number of units done
+    """
+
+    effort_func = []
+    for state_current in range(len(states)):
+
+        effort_temp = np.zeros((len(actions[state_current]), len(states)))
+
+        for i, action in enumerate(actions[state_current]):
+
+            effort_temp[action, :] = (action**exponent) * effort_work
 
         effort_func.append(effort_temp)
 

@@ -20,7 +20,7 @@ def softmax_policy(a, beta):
     return p
 
 # %%
-# instantiate MDP
+# set parameters
 
 
 # states of markov chain
@@ -31,94 +31,174 @@ STATES = np.arange(STATES_NO)
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 16  # no. of weeks for task
-DISCOUNT_FACTOR_REWARD = 0.9  # discounting factor
-DISCOUNT_FACTOR_COST = 0.8
-EFFICACY = 0.4  # self-efficacy (probability of progress for each unit)
+DISCOUNT_FACTOR = 0.7  # discounting factor
+EFFICACY = 0.7  # self-efficacy (probability of progress for each unit)
 
 # utilities :
-REWARD_THR = 4.0  # reward per unit at threshold (14 units)
-REWARD_EXTRA = REWARD_THR/4  # reward per unit after threshold upto 22 units
+REWARD_THR = 3.0  # reward per unit at threshold (14 units)
+REWARD_EXTRA = 0  # reward per unit after threshold upto 22 units
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 
 # %%
+# define environment and reward structure
+# rewards as soon as 14 credits are hit
+
 reward_func = task_structure.reward_immediate_threshold(
     STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
 
 effort_func = task_structure.effort(STATES, ACTIONS, EFFORT_WORK)
 
-reward_func_last = np.zeros(len(STATES))
-effort_func_last = np.zeros(len(STATES))
+total_reward_func_last = np.zeros(len(STATES))
+
+# total reward= reward+effort
+total_reward_func = []
+for state_current in range(len(STATES)):
+
+    total_reward_func.append(reward_func[state_current]
+                             + effort_func[state_current])
+
 T = task_structure.T_binomial(STATES, ACTIONS, EFFICACY)
 
-# %%
-# solve for policy given task structure
+# what is the policy for this reward schedule with single discount factor
+V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+    STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR,
+    total_reward_func, total_reward_func_last, T)
 
-V_opt_full, policy_opt_full, Q_values_full = (
-    mdp_algms.find_optimal_policy_diff_discount_factors(
-        STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR_REWARD,
-        DISCOUNT_FACTOR_COST, reward_func, effort_func, reward_func_last,
-        effort_func_last, T)
-)
-
-# actual policy followed by agent
-effective_policy = np.array(
-    [[policy_opt_full[HORIZON-1-i][i_s][i] for i in range(HORIZON)]
-     for i_s in range(len(STATES))]
-)
-effective_Q = []
-for i_s in range(len(STATES)):
-    Q_s_temp = []
-    for i in range(HORIZON):
-        Q_s_temp.append(Q_values_full[HORIZON-1-i][i_s][:, i])
-    effective_Q.append(np.array(Q_s_temp).T)
-
-initial_state = 0
-s, a, v = mdp_algms.forward_runs(
-    effective_policy, V_opt_full[0], initial_state, HORIZON, STATES, T)
-
-plt.plot(s, label='deterministic')
+plt.figure()
+plt.imshow(policy_opt)
+plt.xlabel('time')
+plt.ylabel('states')
+cbar = plt.colorbar()
+cbar.ax.set_ylabel('actions', rotation=270, labelpad=15)
 
 initial_state = 0
 beta = 5
+plt.figure()
 for i in range(20):
     s, a = mdp_algms.forward_runs_prob(
-        softmax_policy, effective_Q, ACTIONS, initial_state, HORIZON, STATES,
+        softmax_policy, Q_values, ACTIONS, initial_state, HORIZON, STATES,
         T, beta)
     plt.plot(s, color='gray')
-plt.plot(s, color='gray', label='with softmax noise')
+plt.plot(s, color='gray', label='softmax noise')
+
+initial_state = 0
+s, a, v = mdp_algms.forward_runs(
+    policy_opt, V_opt, initial_state, HORIZON, STATES, T)
+plt.plot(s, label='deterministic')
+
+plt.xlabel('weeks')
+plt.ylabel('units completed')
+plt.legend(fontsize=10)
 
 # %%
+# what if i limit the number of units possible in each day
 
-efficacies = np.array([0.2, 0.4, 0.6, 0.8])
+# set maximum no. of units that can be finished in a day
+MAX_UNITS = 4
+ACTIONS_LIM = []
+for state_current in range(STATES_NO):
 
-for i_e, efficacy in enumerate(efficacies):
+    if state_current + MAX_UNITS <= STATES_NO-1:
+        units = MAX_UNITS
+    else:
+        units = STATES_NO-1-state_current
 
-    T = task_structure.T_binomial(STATES, ACTIONS, efficacy)
+    ACTIONS_LIM.append(np.arange(units+1))
 
-    V_opt_full, policy_opt_full, Q_values_full = (
-        mdp_algms.find_optimal_policy_diff_discount_factors(
-            STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR_REWARD,
-            DISCOUNT_FACTOR_COST, reward_func, effort_func, reward_func_last,
-            effort_func_last, T)
-    )
+reward_func = task_structure.reward_immediate_threshold(
+    STATES, ACTIONS_LIM, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
 
-    # actual policy followed by agent
-    effective_policy = np.array(
-        [[policy_opt_full[HORIZON-1-i][i_s][i] for i in range(HORIZON)]
-         for i_s in range(len(STATES))]
-    )
-    effective_Q = []
-    for i_s in range(len(STATES)):
-        Q_s_temp = []
-        for i in range(HORIZON):
-            Q_s_temp.append(Q_values_full[HORIZON-1-i][i_s][:, i])
-        effective_Q.append(np.array(Q_s_temp).T)
+effort_func = task_structure.effort(STATES, ACTIONS_LIM, EFFORT_WORK)
 
-    initial_state = 0
-    s, a, v = mdp_algms.forward_runs(
-        effective_policy, V_opt_full[0], initial_state, HORIZON, STATES, T)
+total_reward_func_last = np.zeros(len(STATES))
 
-    plt.plot(s, label=f'{efficacy}')
+# total reward = reward+effort
+total_reward_func = []
+for state_current in range(len(STATES)):
 
-plt.legend()
+    total_reward_func.append(reward_func[state_current]
+                             + effort_func[state_current])
+
+T = task_structure.T_binomial(STATES, ACTIONS_LIM, EFFICACY)
+
+V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+    STATES, ACTIONS_LIM, HORIZON, DISCOUNT_FACTOR,
+    total_reward_func, total_reward_func_last, T)
+
+plt.figure()
+plt.imshow(policy_opt)
+plt.xlabel('time')
+plt.ylabel('states')
+cbar = plt.colorbar()
+cbar.ax.set_ylabel('actions', rotation=270, labelpad=15)
+
+initial_state = 0
+beta = 5
+plt.figure()
+for i in range(20):
+    s, a = mdp_algms.forward_runs_prob(
+        softmax_policy, Q_values, ACTIONS_LIM, initial_state, HORIZON, STATES,
+        T, beta)
+    plt.plot(s, color='gray')
+plt.plot(s, color='gray', label='softmax noise')
+
+initial_state = 0
+s, a, v = mdp_algms.forward_runs(
+    policy_opt, V_opt, initial_state, HORIZON, STATES, T)
+plt.plot(s, label='deterministic')
+
+plt.xlabel('weeks')
+plt.ylabel('units completed')
+plt.legend(fontsize=10)
+
+# %%
+# what if there is a cost related to the number of units
+EXPONENT = 2.0  # to make effort function more convex
+
+reward_func = task_structure.reward_threshold(
+    STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
+
+effort_func = task_structure.effort_convex_concave(STATES, ACTIONS,
+                                                   EFFORT_WORK, EXPONENT)
+
+total_reward_func_last = np.zeros(len(STATES))
+
+# total reward = reward+effort
+total_reward_func = []
+for state_current in range(len(STATES)):
+
+    total_reward_func.append(reward_func[state_current]
+                             + effort_func[state_current])
+
+T = task_structure.T_binomial(STATES, ACTIONS, EFFICACY)
+
+V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+    STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR,
+    total_reward_func, total_reward_func_last, T)
+
+plt.figure()
+plt.imshow(policy_opt)
+plt.xlabel('time')
+plt.ylabel('states')
+cbar = plt.colorbar()
+cbar.ax.set_ylabel('actions', rotation=270, labelpad=15)
+
+initial_state = 0
+beta = 5
+plt.figure()
+for i in range(20):
+    s, a = mdp_algms.forward_runs_prob(
+        softmax_policy, Q_values, ACTIONS, initial_state, HORIZON, STATES,
+        T, beta)
+    plt.plot(s, color='gray')
+plt.plot(s, color='gray', label='softmax noise')
+
+initial_state = 0
+s, a, v = mdp_algms.forward_runs(
+    policy_opt, V_opt, initial_state, HORIZON, STATES, T)
+plt.plot(s, label='deterministic')
+
+plt.xlabel('weeks')
+plt.ylabel('units completed')
+plt.legend(fontsize=10)
