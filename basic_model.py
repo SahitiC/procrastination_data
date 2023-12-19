@@ -32,7 +32,7 @@ STATES = np.arange(STATES_NO)
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
-HORIZON = 16  # no. of weeks for task
+HORIZON = 15  # no. of weeks for task
 DISCOUNT_FACTOR = 0.9  # discounting factor
 EFFICACY = 0.9  # self-efficacy (probability of progress for each unit)
 
@@ -59,6 +59,7 @@ for state_current in range(len(STATES)):
                              + effort_func[state_current])
 
 # %%
+# with and without gap (real and assumed efficacies)
 
 T = task_structure.T_binomial(STATES, ACTIONS, EFFICACY)
 
@@ -89,6 +90,7 @@ plt.xlabel('weeks')
 plt.ylabel('units completed')
 
 # %%
+# decreasing efficacy
 
 T = task_structure.T_binomial_decreasing(STATES, ACTIONS, HORIZON, EFFICACY)
 
@@ -111,4 +113,63 @@ for i in range(20):
     plt.plot(s, color='gray')
 plt.plot(s, color='gray', label='with softmax noise')
 
+plt.legend(fontsize=10)
+
+# %%
+# with limits on max number of actions
+MAX_UNITS = 22
+ACTIONS_LIM = []
+for state_current in range(STATES_NO):
+
+    if state_current + MAX_UNITS <= STATES_NO-1:
+        units = MAX_UNITS
+    else:
+        units = STATES_NO-1-state_current
+
+    ACTIONS_LIM.append(np.arange(units+1))
+
+reward_func = task_structure.reward_no_immediate(STATES, ACTIONS_LIM,
+                                                 REWARD_SHIRK)
+
+EXPONENT = 2.5
+# effort_func = task_structure.effort(STATES, ACTIONS_LIM, EFFORT_WORK)
+effort_func = task_structure.effort_convex_concave(STATES, ACTIONS_LIM,
+                                                   EFFORT_WORK, EXPONENT)
+
+total_reward_func_last = task_structure.reward_final(STATES, REWARD_THR,
+                                                     REWARD_EXTRA)
+
+# total reward= reward+effort
+total_reward_func = []
+for state_current in range(len(STATES)):
+
+    total_reward_func.append(reward_func[state_current]
+                             + effort_func[state_current])
+
+T = task_structure.T_binomial(STATES, ACTIONS_LIM, EFFICACY)
+
+V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+    STATES, ACTIONS_LIM, HORIZON, DISCOUNT_FACTOR,
+    total_reward_func, total_reward_func_last, T)
+
+efficacy_actual = EFFICACY
+T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
+
+initial_state = 0
+beta = 5
+plt.figure()
+for i in range(20):
+    s, a = mdp_algms.forward_runs_prob(
+        softmax_policy, Q_values, ACTIONS_LIM, initial_state, HORIZON, STATES,
+        T_actual, beta)
+    plt.plot(s, color='gray')
+plt.plot(s, color='gray', label='softmax noise')
+
+initial_state = 0
+s, a, v = mdp_algms.forward_runs(
+    policy_opt, V_opt, initial_state, HORIZON, STATES, T_actual)
+plt.plot(s, label='deterministic')
+
+plt.xlabel('weeks')
+plt.ylabel('units completed')
 plt.legend(fontsize=10)
