@@ -24,18 +24,18 @@ def softmax_policy(a, beta):
 
 
 # states of markov chain
-STATES_NO = 22+1  # one extra state for completing nothing
+STATES_NO = 22+1  # 22 one extra state for completing nothing
 STATES = np.arange(STATES_NO)
 
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
-HORIZON = 16  # no. of weeks for task
+HORIZON = 7  # no. of weeks for task
 DISCOUNT_FACTOR = 0.7  # discounting factor
-EFFICACY = 0.7  # self-efficacy (probability of progress for each unit)
+EFFICACY = 1.0  # self-efficacy (probability of progress for each unit)
 
 # utilities :
-REWARD_THR = 3.0  # reward per unit at threshold (14 units)
+REWARD_THR = 1.5  # reward per unit at threshold (14 units)
 REWARD_EXTRA = 0  # reward per unit after threshold upto 22 units
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
@@ -44,7 +44,7 @@ EFFORT_WORK = -0.3
 # define environment and reward structure
 # rewards as soon as 14 credits are hit
 
-reward_func = task_structure.reward_immediate_threshold(
+reward_func = task_structure.reward_threshold(
     STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
 
 effort_func = task_structure.effort(STATES, ACTIONS, EFFORT_WORK)
@@ -154,7 +154,7 @@ plt.legend(fontsize=10)
 
 # %%
 # what if there is a cost related to the number of units
-EXPONENT = 2.0  # to make effort function more convex
+EXPONENT = 1.9  # to make effort function more convex
 
 reward_func = task_structure.reward_threshold(
     STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)

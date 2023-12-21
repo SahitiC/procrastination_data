@@ -31,12 +31,12 @@ STATES = np.arange(STATES_NO)
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 16  # no. of weeks for task
-DISCOUNT_FACTOR_REWARD = 0.5  # discounting factor
-DISCOUNT_FACTOR_COST = 0.9
+DISCOUNT_FACTOR_REWARD = 0.9  # discounting factor
+DISCOUNT_FACTOR_COST = 0.7
 EFFICACY = 0.5  # self-efficacy (probability of progress for each unit)
 
 # utilities :
-REWARD_THR = 1.4  # reward per unit at threshold (14 units)
+REWARD_THR = 2.7  # reward per unit at threshold (14 units)
 REWARD_EXTRA = REWARD_THR/4  # reward per unit after threshold upto 22 units
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
@@ -75,7 +75,7 @@ for i_s in range(len(STATES)):
         Q_s_temp.append(Q_values_full[HORIZON-1-i][i_s][:, i])
     effective_Q.append(np.array(Q_s_temp).T)
 
-efficacy_actual = 0.9
+efficacy_actual = EFFICACY
 T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
 
 initial_state = 0
