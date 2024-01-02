@@ -63,6 +63,33 @@ def reward_threshold(states, actions, reward_shirk, reward_thr,
     return reward_func
 
 
+def reward_immediate(states, actions, reward_shirk,
+                     reward_unit, reward_extra):
+
+    reward_func = []
+
+    for state_current in range(len(states)):
+
+        reward_temp = np.zeros((len(actions[state_current]), len(states)))
+
+        # rewards for shirk based on the action
+        for action in range(len(actions[state_current])):
+
+            reward_temp[action, 0:state_current+action+1] = (
+                (len(states)-1-action) * reward_shirk)
+
+        # immediate rewards for units completed
+        for action in range(len(actions[state_current])):
+
+            reward_temp[action, state_current:state_current+action+1] += (
+                np.arange(0, action+1) * reward_unit
+            )
+
+        reward_func.append(reward_temp)
+
+    return reward_func
+
+
 def reward_no_immediate(states, actions, reward_shirk):
     """
     The only immediate rewards are from shirk
