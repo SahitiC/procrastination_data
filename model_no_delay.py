@@ -30,8 +30,8 @@ STATES = np.arange(STATES_NO)
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
-HORIZON = 7  # no. of weeks for task
-DISCOUNT_FACTOR = 0.7  # discounting factor
+HORIZON = 15  # no. of weeks for task
+DISCOUNT_FACTOR = 0.6  # discounting factor
 EFFICACY = 1.0  # self-efficacy (probability of progress for each unit)
 
 # utilities :
@@ -154,7 +154,7 @@ plt.legend(fontsize=10)
 
 # %%
 # what if there is a cost related to the number of units
-EXPONENT = 1.9  # to make effort function more convex
+EXPONENT = 1.8  # to make effort function more convex
 
 reward_func = task_structure.reward_threshold(
     STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
