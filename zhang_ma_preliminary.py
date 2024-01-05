@@ -129,19 +129,6 @@ timseries_to_cluster = np.vstack(
 labels = km.fit_predict(timseries_to_cluster)
 data_relevant['labels'] = labels
 
-# normalise cumulative series week-wise
-cumulative_normalised = []
-for i in range(len(data_relevant)):
-    temp = np.array(data_relevant['cumulative_progress_weeks'][i])
-    cumulative_normalised.append(temp/data_relevant['Total credits'][i])
-data_relevant['cumulative progress weeks normalised'] = cumulative_normalised
-
-km = TimeSeriesKMeans(n_clusters=8, n_init=5, metric="euclidean", verbose=True)
-timseries_to_cluster = np.vstack(
-    data_relevant['cumulative progress weeks normalised'])
-labels = km.fit_predict(timseries_to_cluster)
-data_relevant['labels'] = labels
-
 for label in set(data_relevant['labels']):
     plt.figure()
 
