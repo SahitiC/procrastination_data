@@ -34,13 +34,13 @@ ACTIONS.extend(ACTIONS_BASE)
 
 HORIZON = 15  # no. of weeks for task
 DISCOUNT_FACTOR = 1.0  # discounting factor
-EFFICACY = 0.9  # self-efficacy (probability of progress for each unit)
-P_STAY = 0.99  # probability of switching between reward states
+EFFICACY = 0.5  # self-efficacy (probability of progress for each unit)
+P_STAY = 0.95  # probability of switching between reward states
 
 # utilities :
 REWARD_UNIT = 2.0  # reward per unit at threshold (14 units)
 REWARD_EXTRA = 0  # reward per unit after threshold upto 22 units
-REWARD_INTEREST = 1.0  # immediate interest rewards on top of course rewards
+REWARD_INTEREST = 2.0  # immediate interest rewards on top of course rewards
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 
@@ -103,8 +103,8 @@ for state_current in range(len(STATES[:int(STATES_NO/2)])):
 T_high = []
 for state_current in range(len(STATES[:int(STATES_NO/2)])):
 
-    temp = np.block([(1 - P_STAY) * T_partial[state_current],
-                     P_STAY * T_partial[state_current]])
+    temp = np.block([(P_STAY) * T_partial[state_current],
+                     (1 - P_STAY) * T_partial[state_current]])
     assert (np.round(np.sum(temp, axis=1), 6) == 1).all()
     T_high.append(temp)
 
@@ -128,5 +128,10 @@ for i in range(20):
         T, beta)
     # convert state values to number of units done
     s_unit = np.where(s > 22, s-23, s)
-    plt.plot(s, color='gray')
-plt.plot(s, color='gray', label='softmax noise')
+    plt.plot(s_unit, color='gray')
+plt.plot(s_unit, color='gray', label='softmax noise')
+
+initial_state = 0
+s, a, v = mdp_algms.forward_runs(
+    policy_opt, V_opt, initial_state, HORIZON, STATES, T)
+plt.plot(s_unit, label='deterministic')
