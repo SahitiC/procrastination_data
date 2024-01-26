@@ -32,11 +32,11 @@ ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 16  # no. of weeks for task
 DISCOUNT_FACTOR_REWARD = 0.9  # discounting factor
-DISCOUNT_FACTOR_COST = 0.7
-EFFICACY = 0.5  # self-efficacy (probability of progress for each unit)
+DISCOUNT_FACTOR_COST = 0.5
+EFFICACY = 0.6  # self-efficacy (probability of progress for each unit)
 
 # utilities :
-REWARD_THR = 2.7  # reward per unit at threshold (14 units)
+REWARD_THR = 1.0  # reward per unit at threshold (14 units)
 REWARD_EXTRA = REWARD_THR/4  # reward per unit after threshold upto 22 units
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
@@ -79,7 +79,7 @@ efficacy_actual = EFFICACY
 T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
 
 initial_state = 0
-beta = 5
+beta = 7
 for i in range(20):
     s, a = mdp_algms.forward_runs_prob(
         softmax_policy, effective_Q, ACTIONS, initial_state, HORIZON, STATES,

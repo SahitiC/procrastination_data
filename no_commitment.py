@@ -34,11 +34,11 @@ ACTIONS.extend(ACTIONS_BASE)
 
 HORIZON = 15  # no. of weeks for task
 DISCOUNT_FACTOR = 1.0  # discounting factor
-EFFICACY = 0.5  # self-efficacy (probability of progress for each unit)
+EFFICACY = 0.6  # self-efficacy (probability of progress for each unit)
 P_STAY = 0.95  # probability of switching between reward states
 
 # utilities :
-REWARD_UNIT = 2.0  # reward per unit at threshold (14 units)
+REWARD_UNIT = 4.0  # reward per unit at threshold (14 units)
 REWARD_EXTRA = 0  # reward per unit after threshold upto 22 units
 REWARD_INTEREST = 2.0  # immediate interest rewards on top of course rewards
 REWARD_SHIRK = 0.1
@@ -120,7 +120,7 @@ V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
     total_reward_func, total_reward_func_last, T)
 
 initial_state = 0
-beta = 5
+beta = 7
 plt.figure()
 for i in range(20):
     s, a = mdp_algms.forward_runs_prob(

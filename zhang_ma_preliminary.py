@@ -1,3 +1,4 @@
+import seaborn as sns
 from tslearn.clustering import TimeSeriesKMeans
 import numpy as np
 import matplotlib as mpl
@@ -5,7 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import ast
 import scipy.stats
-mpl.rcParams['font.size'] = 14
+mpl.rcParams['font.size'] = 16
+mpl.rcParams['lines.linewidth'] = 3
 
 # %%
 
@@ -123,14 +125,35 @@ for i in range(len(data_relevant)):
     cumulative_normalised.append(temp/data_relevant['Total credits'][i])
 data_relevant['cumulative progress normalised'] = cumulative_normalised
 
+# inertia vs cluuster number
+inertia = []
+for cluster_size in range(15):
+    print(cluster_size+1)
+    km = TimeSeriesKMeans(n_clusters=cluster_size+1, n_init=5,
+                          metric="euclidean", verbose=True)
+    timseries_to_cluster = np.vstack(
+        data_relevant['cumulative progress normalised'])
+    labels = km.fit_predict(timseries_to_cluster)
+    inertia.append(km.inertia_)
+
+plt.plot(inertia)
+plt.xticks(np.arange(15), labels=np.arange(1, 16))
+plt.xlabel('cluster number')
+plt.ylabel('k-means sum of squares')
+
+# %%
+
 km = TimeSeriesKMeans(n_clusters=8, n_init=5, metric="euclidean", verbose=True)
 timseries_to_cluster = np.vstack(
     data_relevant['cumulative progress normalised'])
 labels = km.fit_predict(timseries_to_cluster)
 data_relevant['labels'] = labels
 
+
+# plot clustered data
+
 for label in set(data_relevant['labels']):
-    plt.figure()
+    plt.figure(figsize=(5, 4), dpi=100)
 
     for i in range(len(data_relevant)):
 
@@ -139,6 +162,14 @@ for label in set(data_relevant['labels']):
             # data_relevant['cumulative progress normalised'][i]
             plt.plot(data_relevant['cumulative_progress_weeks'][i],
                      alpha=0.5)
+    sns.despine()
+    plt.xticks([0, 7, 15])
+    plt.yticks([0, 5, 11])
+    # plt.savefig(
+    #     f'cluster_{label}.svg',
+    #     format='svg', dpi=300
+    # )
+
 
 # %%
 

@@ -24,19 +24,19 @@ def softmax_policy(a, beta):
 
 
 # states of markov chain
-STATES_NO = 14+1  # 22 one extra state for completing nothing
+STATES_NO = 22+1  # 22 one extra state for completing nothing
 STATES = np.arange(STATES_NO)
 
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 15  # no. of weeks for task
-DISCOUNT_FACTOR = 0.6  # discounting factor
-EFFICACY = 1.0  # self-efficacy (probability of progress for each unit)
+DISCOUNT_FACTOR = 0.5  # discounting factor
+EFFICACY = 0.8  # self-efficacy (probability of progress for each unit)
 
 # utilities :
-REWARD_THR = 4.3  # reward per unit at threshold (14 units)
-REWARD_EXTRA = 0  # reward per unit after threshold upto 22 units
+REWARD_THR = 7.0  # reward per unit at threshold (14 units)
+REWARD_EXTRA = REWARD_THR/8  # reward per unit after threshold upto 22 units
 REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 
@@ -106,7 +106,7 @@ for state_current in range(STATES_NO):
 
     ACTIONS_LIM.append(np.arange(units+1))
 
-reward_func = task_structure.reward_immediate(
+reward_func = task_structure.reward_threshold(
     STATES, ACTIONS_LIM, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
 
 effort_func = task_structure.effort(STATES, ACTIONS_LIM, EFFORT_WORK)
@@ -155,9 +155,9 @@ plt.legend(fontsize=10)
 # %%
 # what if there is a cost related to the number of units
 
-EXPONENT = 2.8  # to make effort function more convex
+EXPONENT = 2.3  # to make effort function more convex
 
-reward_func = task_structure.reward_immediate(
+reward_func = task_structure.reward_threshold(
     STATES, ACTIONS, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA)
 
 effort_func = task_structure.effort_convex_concave(STATES, ACTIONS,
@@ -186,7 +186,7 @@ cbar = plt.colorbar()
 cbar.ax.set_ylabel('actions', rotation=270, labelpad=15)
 
 initial_state = 0
-beta = 5
+beta = 7
 plt.figure()
 for i in range(20):
     s, a = mdp_algms.forward_runs_prob(

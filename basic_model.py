@@ -32,7 +32,7 @@ STATES = np.arange(STATES_NO)
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
-HORIZON = 15  # no. of weeks for task
+HORIZON = 16  # no. of weeks for task
 DISCOUNT_FACTOR = 0.9  # discounting factor
 EFFICACY = 0.9  # self-efficacy (probability of progress for each unit)
 
