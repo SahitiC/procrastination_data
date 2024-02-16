@@ -32,9 +32,9 @@ STATES = np.arange(STATES_NO)
 # allow as many units as possible based on state
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
-HORIZON = 16  # no. of weeks for task
-DISCOUNT_FACTOR = 0.9  # discounting factor
-EFFICACY = 0.9  # self-efficacy (probability of progress for each unit)
+HORIZON = 15  # no. of weeks for task
+DISCOUNT_FACTOR = 1.0  # discounting factor
+EFFICACY = 1.0  # self-efficacy (probability of progress for each unit)
 
 # utilities :
 REWARD_THR = 4.0  # reward per unit at threshold (14 units)
@@ -82,6 +82,7 @@ for i in range(20):
     s, a = mdp_algms.forward_runs_prob(
         softmax_policy, Q_values, ACTIONS, initial_state, HORIZON, STATES,
         T_actual, beta)
+    print(a)
     plt.plot(s, color='gray')
 plt.plot(s, color='gray', label='with softmax noise')
 

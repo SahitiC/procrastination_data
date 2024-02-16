@@ -32,8 +32,8 @@ ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 16  # no. of weeks for task
 DISCOUNT_FACTOR_REWARD = 0.9  # discounting factor
-DISCOUNT_FACTOR_COST = 0.5
-EFFICACY = 0.6  # self-efficacy (probability of progress for each unit)
+DISCOUNT_FACTOR_COST = 0.7
+EFFICACY = 0.8  # self-efficacy (probability of progress for each unit)
 
 # utilities :
 REWARD_THR = 1.0  # reward per unit at threshold (14 units)
