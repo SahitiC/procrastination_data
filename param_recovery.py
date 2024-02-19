@@ -3,10 +3,19 @@ import matplotlib.pyplot as plt
 import mdp_algms
 import task_structure
 import likelihoods
+import time
 
 # %%
-# generate some data
+
+
+def softmax_policy(a, beta):
+    c = a - np.max(a)
+    p = np.exp(beta*c) / np.sum(np.exp(beta*c))
+    return p
+
+# %%
 # define params:
+
 
 # states of markov chain
 STATES_NO = 22+1  # one extra state for completing nothing
@@ -27,35 +36,86 @@ REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 BETA = 7
 
-# get task structure
+# %%
+# generate some data (basic model)
 
-reward_func = task_structure.reward_no_immediate(STATES, ACTIONS, REWARD_SHIRK)
 
-effort_func = task_structure.effort(STATES, ACTIONS, EFFORT_WORK)
+def gen_data_basic(discount_factor, efficacy):
 
-total_reward_func_last = task_structure.reward_final(STATES, REWARD_THR,
-                                                     REWARD_EXTRA)
+    # get task structure
+    reward_func = task_structure.reward_no_immediate(
+        STATES, ACTIONS, REWARD_SHIRK)
 
-total_reward_func = []
-for state_current in range(len(STATES)):
+    effort_func = task_structure.effort(STATES, ACTIONS, EFFORT_WORK)
 
-    total_reward_func.append(reward_func[state_current]
-                             + effort_func[state_current])
+    total_reward_func_last = task_structure.reward_final(STATES, REWARD_THR,
+                                                         REWARD_EXTRA)
 
-T = task_structure.T_binomial(STATES, ACTIONS, EFFICACY)
+    total_reward_func = []
+    for state_current in range(len(STATES)):
 
-# get policy
+        total_reward_func.append(reward_func[state_current]
+                                 + effort_func[state_current])
 
-V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
-    STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR,
-    total_reward_func, total_reward_func_last, T)
+    T = task_structure.T_binomial(STATES, ACTIONS, efficacy)
 
-# generate data - forward runs
+    # get policy
+    V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+        STATES, ACTIONS, HORIZON, discount_factor,
+        total_reward_func, total_reward_func_last, T)
 
-initial_state = 0
-s, a = mdp_algms.forward_runs_prob(
-    likelihoods.softmax_policy, Q_values, ACTIONS, initial_state,
-    HORIZON, STATES, T, BETA)
+    # generate data - forward runs
+    initial_state = 0
+    s, a = mdp_algms.forward_runs_prob(
+        softmax_policy, Q_values, ACTIONS, initial_state,
+        HORIZON, STATES, T, BETA)
+
+    return s
+
 
 # %%
-# recover params
+# example recovery
+
+# generate data
+data = gen_data_basic(DISCOUNT_FACTOR, EFFICACY)
+# recover params given data (=s)
+start = time.time()
+mle_result = likelihoods.maximum_likelihood_estimate_basic(
+    STATES, ACTIONS, HORIZON, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA,
+    EFFORT_WORK, BETA, data)
+end = time.time()
+print(end-start)
+
+# systematic recovery for many params
+start = time.time()
+params = []
+for i in range(200):
+    # generate random parameters
+    discount_factor = np.random.uniform(0, 1)
+    efficacy = np.random.uniform(0, 1)
+    # generate data
+    data = gen_data_basic(discount_factor, efficacy)
+    # recover params given data
+    mle_result = likelihoods.maximum_likelihood_estimate_basic(
+        STATES, ACTIONS, HORIZON, REWARD_SHIRK, REWARD_THR, REWARD_EXTRA,
+        EFFORT_WORK, BETA, data)
+    params.append([discount_factor, efficacy,
+                   mle_result[0], mle_result[1]])
+end = time.time()
+print(end-start)
+
+# %%
+params = np.array(params)
+colors = np.array(['tab:blue', 'tab:orange'])
+efficacys_color = np.where(params[:, 1] < 0.35, 1, 0)
+plt.figure()
+plt.scatter(params[:, 0], params[:, 2],
+            color=colors[efficacys_color])
+plt.xlabel('true discount factor')
+plt.ylabel('estimated discount factor')
+plt.legend()
+plt.figure()
+discounts_color = np.where(params[:, 0] < 0.2, 1, 0)
+plt.scatter(params[:, 1], params[:, 3], color=colors[discounts_color])
+plt.xlabel('true efficacy')
+plt.ylabel('estimated efficacy')

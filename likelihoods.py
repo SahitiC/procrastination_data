@@ -2,6 +2,7 @@
 import task_structure
 import mdp_algms
 import numpy as np
+from scipy.optimize import minimize
 
 
 def softmax_policy(a, beta):
@@ -10,10 +11,15 @@ def softmax_policy(a, beta):
     return p
 
 
-def likelihood_basic_model(data, states, actions, horizon, discount_factor,
-                           efficacy, reward_shirk, reward_thr, reward_extra,
-                           effort_work, beta):
-
+def likelihood_basic_model(x,
+                           states, actions, horizon, reward_shirk, reward_thr,
+                           reward_extra, effort_work, beta,
+                           data):
+    """
+    x = free params of model
+    """
+    discount_factor = x[0]
+    efficacy = x[1]
     # finish defining structure
     reward_func = task_structure.reward_no_immediate(
         states, actions, reward_shirk)
@@ -53,3 +59,40 @@ def likelihood_basic_model(data, states, actions, horizon, discount_factor,
         nllkhd = nllkhd - np.log(partial)
 
     return nllkhd
+
+
+def maximum_likelihood_estimate_basic(states, actions, horizon, reward_shirk,
+                                      reward_thr, reward_extra, effort_work,
+                                      beta, data):
+
+    nllkhd = np.inf
+    # repeat likelihood optimisation for different initial values
+    for i in range(5):
+
+        # set initial value for params (random draws)
+        discount_factor = np.random.uniform(0, 1)
+        efficacy = np.random.uniform(0, 1)
+
+        # minimise nllkhd with initial value to get param estimate
+        result = minimize(likelihood_basic_model,
+                          x0=[discount_factor, efficacy],
+                          args=(states, actions, horizon, reward_shirk,
+                                reward_thr, reward_extra, effort_work, beta,
+                                data),
+                          bounds=((0, 1), (0, 1)))
+
+        # whats the neg log likelhood of data under param estimate
+        nllkhd_result = likelihood_basic_model(
+            result.x, states, actions, horizon, reward_shirk, reward_thr,
+            reward_extra, effort_work, beta, data)
+
+        # is it better than previous estimate
+        if nllkhd_result < nllkhd:
+
+            nllkhd = nllkhd_result
+            final_result = result.x
+            print(
+                f"current estimate for discount factor and efficacy {result.x}"
+                f" with neg log likelihood {nllkhd}")
+
+    return final_result
