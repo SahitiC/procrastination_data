@@ -66,7 +66,7 @@ def likelihood_basic_model(x,
 
 
 def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
-                                      reward_extra, beta, data):
+                                      reward_extra, beta, data, verbose=0):
 
     nllkhd = np.inf
     # repeat likelihood optimisation for different initial values
@@ -78,30 +78,33 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         # exponential distribution for beta with lambda = 1 or scale = 1
         # following Wilson and Collins 2019:
         # beta = np.random.exponential(2)
-        reward_shirk = np.random.exponential(1)
-        effort_work = -1 * np.random.exponential(1)
+        reward_shirk = np.random.exponential(0.5)
+        effort_work = -1 * np.random.exponential(0.5)
 
         # minimise nllkhd with initial value to get param estimate
         result = minimize(likelihood_basic_model,
                           x0=[discount_factor, efficacy,
                               reward_shirk, effort_work],
                           args=(states, actions, horizon,
-                                reward_thr, reward_extra, beta, data),
+                                reward_thr, reward_extra, beta,
+                                data),
                           bounds=((0, 1), (0, 1),
                                   (0, None), (None, 0)))
 
         # whats the neg log likelhood of data under param estimate
         nllkhd_result = likelihood_basic_model(
-            result.x, states, actions, horizon, reward_thr, reward_extra, beta, data)
+            result.x, states, actions, horizon, reward_thr, reward_extra, beta,
+            data)
 
         # is it better than previous estimate
         if nllkhd_result < nllkhd:
 
             nllkhd = nllkhd_result
             final_result = result.x
-            # print(
-            #     "current estimate for discount factor, efficacy, beta, "
-            #     f"reward_shirk, effort_work {result.x} "
-            #     f"with neg log likelihood {nllkhd}")
+            if verbose == 1:
+                print(
+                    "current estimate for discount_factor, efficacy,"
+                    f"reward_shirk, effort_work {result.x} "
+                    f"with neg log likelihood {nllkhd}")
 
     return final_result
