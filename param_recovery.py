@@ -49,13 +49,14 @@ def gen_data_basic(states, actions, horizon, discount_factor, efficacy, beta,
 
 # function to recover free parameters
 def recover_params_basic(input_params):
+    """
+    inputs: parameters to recover
+    """
 
     discount_factor = input_params[0]
     efficacy = input_params[1]
     reward_shirk = input_params[2]
     effort_work = input_params[3]
-
-    params = []
 
     # generate data
     data = gen_data_basic(
@@ -64,12 +65,14 @@ def recover_params_basic(input_params):
 
     # recover params given data
     mle_result = likelihoods.maximum_likelihood_estimate_basic(
-        STATES, ACTIONS, HORIZON, REWARD_THR, REWARD_EXTRA, BETA, data)
-    params.append([
+        STATES, ACTIONS, HORIZON, REWARD_THR, REWARD_EXTRA, BETA, data,
+        input_params, initial_real=1)
+    params = [
         discount_factor, efficacy, reward_shirk, effort_work,
-        mle_result[0], mle_result[1], mle_result[2], mle_result[3]])
+        mle_result.x[0], mle_result.x[1], mle_result.x[2], mle_result.x[3]]
+    inv_hessians = mle_result.hess_inv.todense()
 
-    return params
+    return [params, inv_hessians]
 
 
 # %%
@@ -95,7 +98,7 @@ REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 BETA = 5
 
-N = 200  # no of params sets to recover
+N = 700  # no of params sets to recover
 # generate iterable list of input params
 inputs_lst = []
 for i in range(N):
@@ -103,16 +106,17 @@ for i in range(N):
     discount_factor = np.random.uniform(0.2, 1)
     efficacy = np.random.uniform(0.35, 1)
     # beta = np.random.exponential(2)
-    reward_shirk = np.random.exponential(0.5)
-    effort_work = -1 * np.random.exponential(0.5)
+    reward_shirk = np.random.gamma(2, 2)
+    effort_work = -1 * np.random.gamma(2, 2)
 
     inputs_lst.append([discount_factor, efficacy, reward_shirk, effort_work])
 
+# parallelise code
 if __name__ == "__main__":
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         result_lst = executor.map(recover_params_basic, inputs_lst)
 
     result_lst = [*result_lst]
-    result = np.squeeze(np.array(result_lst))
-    np.savetxt('result.csv', result, delimiter=',')
+    result = np.array(result_lst, dtype=object)
+    np.save('result.npy', result)

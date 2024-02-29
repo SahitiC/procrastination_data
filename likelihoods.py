@@ -66,11 +66,35 @@ def likelihood_basic_model(x,
 
 
 def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
-                                      reward_extra, beta, data, verbose=0):
+                                      reward_extra, beta, data, true_params,
+                                      initial_real=0, verbose=0):
+    """
+    inputs - fixed parameters, data
+    initial_real: whether to include true parameter as an initial point
+    verbose: whether to print current estimate and likelihood
+    """
 
     nllkhd = np.inf
+
+    if initial_real == 1:
+        final_result = minimize(likelihood_basic_model,
+                                x0=true_params,
+                                args=(states, actions, horizon,
+                                      reward_thr, reward_extra, beta,
+                                      data),
+                                bounds=((0, 1), (0, 1),
+                                        (0, None), (None, 0)))
+        nllkhd = likelihood_basic_model(
+            final_result.x, states, actions, horizon, reward_thr, reward_extra,
+            beta, data)
+        if verbose == 1:
+            print("with initial point = true param "
+                  "current estimate for discount_factor, efficacy,"
+                  f"reward_shirk, effort_work {final_result.x} "
+                  f"with neg log likelihood {nllkhd}")
+
     # repeat likelihood optimisation for different initial values
-    for i in range(5):
+    for i in range(10):
 
         # set initial value for params (random draws)
         discount_factor = np.random.uniform(0, 1)
@@ -100,7 +124,7 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         if nllkhd_result < nllkhd:
 
             nllkhd = nllkhd_result
-            final_result = result.x
+            final_result = result
             if verbose == 1:
                 print(
                     "current estimate for discount_factor, efficacy,"
