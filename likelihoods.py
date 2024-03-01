@@ -13,16 +13,15 @@ def softmax_policy(a, beta):
 
 def likelihood_basic_model(x,
                            states, actions, horizon,
-                           reward_thr, reward_extra, beta,
-                           data):
+                           reward_thr, reward_extra, data):
     """
     x = free params of model
     """
     discount_factor = x[0]
     efficacy = x[1]
-    # beta = x[2]
     reward_shirk = x[2]
     effort_work = x[3]
+    beta = x[4]
 
     # finish defining structure
     reward_func = task_structure.reward_no_immediate(
@@ -66,7 +65,7 @@ def likelihood_basic_model(x,
 
 
 def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
-                                      reward_extra, beta, data, true_params,
+                                      reward_extra, data, true_params,
                                       initial_real=0, verbose=0):
     """
     inputs - fixed parameters, data
@@ -80,17 +79,16 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         final_result = minimize(likelihood_basic_model,
                                 x0=true_params,
                                 args=(states, actions, horizon,
-                                      reward_thr, reward_extra, beta,
-                                      data),
+                                      reward_thr, reward_extra, data),
                                 bounds=((0, 1), (0, 1),
-                                        (0, None), (None, 0)))
+                                        (0, None), (None, 0), (0, None)))
         nllkhd = likelihood_basic_model(
             final_result.x, states, actions, horizon, reward_thr, reward_extra,
-            beta, data)
+            data)
         if verbose == 1:
             print("with initial point = true param "
                   "current estimate for discount_factor, efficacy,"
-                  f"reward_shirk, effort_work {final_result.x} "
+                  f"reward_shirk, effort_work, beta {final_result.x} "
                   f"with neg log likelihood {nllkhd}")
 
     # repeat likelihood optimisation for different initial values
@@ -101,24 +99,22 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         efficacy = np.random.uniform(0, 1)
         # exponential distribution for beta with lambda = 1 or scale = 1
         # following Wilson and Collins 2019:
-        # beta = np.random.exponential(2)
+        beta = np.random.exponential(2)
         reward_shirk = np.random.exponential(0.5)
         effort_work = -1 * np.random.exponential(0.5)
 
         # minimise nllkhd with initial value to get param estimate
         result = minimize(likelihood_basic_model,
                           x0=[discount_factor, efficacy,
-                              reward_shirk, effort_work],
+                              reward_shirk, effort_work, beta],
                           args=(states, actions, horizon,
-                                reward_thr, reward_extra, beta,
-                                data),
+                                reward_thr, reward_extra,  data),
                           bounds=((0, 1), (0, 1),
-                                  (0, None), (None, 0)))
+                                  (0, None), (None, 0), (0, None)))
 
         # whats the neg log likelhood of data under param estimate
         nllkhd_result = likelihood_basic_model(
-            result.x, states, actions, horizon, reward_thr, reward_extra, beta,
-            data)
+            result.x, states, actions, horizon, reward_thr, reward_extra, data)
 
         # is it better than previous estimate
         if nllkhd_result < nllkhd:
@@ -128,7 +124,7 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
             if verbose == 1:
                 print(
                     "current estimate for discount_factor, efficacy,"
-                    f"reward_shirk, effort_work {result.x} "
+                    f"reward_shirk, effort_work, beta {result.x} "
                     f"with neg log likelihood {nllkhd}")
 
     return final_result

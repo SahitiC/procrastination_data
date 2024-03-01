@@ -57,19 +57,21 @@ def recover_params_basic(input_params):
     efficacy = input_params[1]
     reward_shirk = input_params[2]
     effort_work = input_params[3]
+    beta = input_params[4]
 
     # generate data
     data = gen_data_basic(
-        STATES, ACTIONS, HORIZON, discount_factor, efficacy, BETA,
+        STATES, ACTIONS, HORIZON, discount_factor, efficacy, beta,
         reward_shirk, effort_work, REWARD_THR, REWARD_EXTRA)
 
     # recover params given data
     mle_result = likelihoods.maximum_likelihood_estimate_basic(
-        STATES, ACTIONS, HORIZON, REWARD_THR, REWARD_EXTRA, BETA, data,
+        STATES, ACTIONS, HORIZON, REWARD_THR, REWARD_EXTRA, data,
         input_params, initial_real=1)
     params = [
-        discount_factor, efficacy, reward_shirk, effort_work,
-        mle_result.x[0], mle_result.x[1], mle_result.x[2], mle_result.x[3]]
+        discount_factor, efficacy, reward_shirk, effort_work, beta,
+        mle_result.x[0], mle_result.x[1], mle_result.x[2], mle_result.x[3],
+        mle_result.x[4]]
     inv_hessians = mle_result.hess_inv.todense()
 
     return [params, inv_hessians]
@@ -98,18 +100,19 @@ REWARD_SHIRK = 0.1
 EFFORT_WORK = -0.3
 BETA = 5
 
-N = 700  # no of params sets to recover
+N = 1000  # no of params sets to recover
 # generate iterable list of input params
 inputs_lst = []
 for i in range(N):
     # generate random parameters
     discount_factor = np.random.uniform(0.2, 1)
     efficacy = np.random.uniform(0.35, 1)
-    # beta = np.random.exponential(2)
-    reward_shirk = np.random.gamma(2, 2)
-    effort_work = -1 * np.random.gamma(2, 2)
+    beta = np.random.exponential(2)
+    reward_shirk = np.random.exponential(0.5)
+    effort_work = -1 * np.random.exponential(0.5)
 
-    inputs_lst.append([discount_factor, efficacy, reward_shirk, effort_work])
+    inputs_lst.append([discount_factor, efficacy, reward_shirk, effort_work,
+                       beta])
 
 # parallelise code
 if __name__ == "__main__":
