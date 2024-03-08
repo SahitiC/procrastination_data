@@ -13,7 +13,7 @@ def softmax_policy(a, beta):
 
 def likelihood_basic_model(x,
                            states, actions, horizon,
-                           reward_thr, reward_extra, data):
+                           reward_thr, reward_extra, beta, data):
     """
     x = free params of model
     """
@@ -21,7 +21,7 @@ def likelihood_basic_model(x,
     efficacy = x[1]
     reward_shirk = x[2]
     effort_work = x[3]
-    beta = x[4]
+    #beta = x[4]
 
     # finish defining structure
     reward_func = task_structure.reward_no_immediate(
@@ -49,23 +49,27 @@ def likelihood_basic_model(x,
     # calculating likelihood
     nllkhd = 0
 
-    for i_time in range(len(data[1:])):
+    for i_trial in range(len(data)):
 
-        partial = 0
-        # enumerate over all posible actions for the observed state
-        for i_a, action in enumerate(actions[data[i_time]]):
+        for i_time in range(len(data[i_trial][1:])):
 
-            partial += (
-                softmax_policy(Q_values[data[i_time]][:, i_time], beta)[action]
-                * T[data[i_time]][action][data[i_time+1]])
+            partial = 0
+            # enumerate over all posible actions for the observed state
+            for i_a, action in enumerate(actions[data[i_trial][i_time]]):
 
-        nllkhd = nllkhd - np.log(partial)
+                partial += (
+                    softmax_policy(Q_values[data[i_trial][i_time]]
+                                   [:, i_time], beta)[action]
+                    * T[data[i_trial][i_time]][action][
+                        data[i_trial][i_time+1]])
+
+            nllkhd = nllkhd - np.log(partial)
 
     return nllkhd
 
 
 def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
-                                      reward_extra, data, true_params,
+                                      reward_extra, beta, data, true_params,
                                       initial_real=0, verbose=0):
     """
     inputs - fixed parameters, data
@@ -79,12 +83,12 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         final_result = minimize(likelihood_basic_model,
                                 x0=true_params,
                                 args=(states, actions, horizon,
-                                      reward_thr, reward_extra, data),
+                                      reward_thr, reward_extra, beta, data),
                                 bounds=((0, 1), (0, 1),
-                                        (0, None), (None, 0), (0, None)))
+                                        (0, None), (None, 0)))
         nllkhd = likelihood_basic_model(
             final_result.x, states, actions, horizon, reward_thr, reward_extra,
-            data)
+            beta, data)
         if verbose == 1:
             print("with initial point = true param "
                   "current estimate for discount_factor, efficacy,"
@@ -99,22 +103,23 @@ def maximum_likelihood_estimate_basic(states, actions, horizon, reward_thr,
         efficacy = np.random.uniform(0, 1)
         # exponential distribution for beta with lambda = 1 or scale = 1
         # following Wilson and Collins 2019:
-        beta = np.random.exponential(2)
+        #beta = np.random.exponential(2)
         reward_shirk = np.random.exponential(0.5)
         effort_work = -1 * np.random.exponential(0.5)
 
         # minimise nllkhd with initial value to get param estimate
         result = minimize(likelihood_basic_model,
                           x0=[discount_factor, efficacy,
-                              reward_shirk, effort_work, beta],
+                              reward_shirk, effort_work],
                           args=(states, actions, horizon,
-                                reward_thr, reward_extra,  data),
+                                reward_thr, reward_extra, beta, data),
                           bounds=((0, 1), (0, 1),
-                                  (0, None), (None, 0), (0, None)))
+                                  (0, None), (None, 0)))
 
         # whats the neg log likelhood of data under param estimate
         nllkhd_result = likelihood_basic_model(
-            result.x, states, actions, horizon, reward_thr, reward_extra, data)
+            result.x, states, actions, horizon, reward_thr, reward_extra,
+            beta, data)
 
         # is it better than previous estimate
         if nllkhd_result < nllkhd:

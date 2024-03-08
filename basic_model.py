@@ -33,14 +33,14 @@ STATES = np.arange(STATES_NO)
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 15  # no. of weeks for task
-DISCOUNT_FACTOR = 1.0  # discounting factor
-EFFICACY = 1.0  # self-efficacy (probability of progress for each unit)
+DISCOUNT_FACTOR = 0.00157  # discounting factor
+EFFICACY = 0.911  # self-efficacy (probability of progress for each unit)
 
 # utilities :
 REWARD_THR = 4.0  # reward per unit at threshold (14 units)
 REWARD_EXTRA = REWARD_THR/4  # reward per unit after threshold upto 22 units
-REWARD_SHIRK = 0.1
-EFFORT_WORK = -0.3
+REWARD_SHIRK = 0.000126
+EFFORT_WORK = -0.00188
 
 # %%
 
@@ -70,23 +70,21 @@ V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
 efficacy_actual = EFFICACY
 T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
 
-initial_state = 0
-s, a, v = mdp_algms.forward_runs(
-    policy_opt, V_opt, initial_state, HORIZON, STATES, T_actual)
+# initial_state = 0
+# s, a, v = mdp_algms.forward_runs(
+#     policy_opt, V_opt, initial_state, HORIZON, STATES, T_actual)
 
-plt.plot(s, label='deterministic')
+# plt.plot(s, label='deterministic')
 
 initial_state = 0
-beta = 5
-for i in range(20):
+beta = 1012.81
+for i in range(10):
     s, a = mdp_algms.forward_runs_prob(
         softmax_policy, Q_values, ACTIONS, initial_state, HORIZON, STATES,
         T_actual, beta)
-    print(a)
+    print(s)
     plt.plot(s, color='gray')
-plt.plot(s, color='gray', label='with softmax noise')
 
-plt.legend(fontsize=10)
 plt.xlabel('weeks')
 plt.ylabel('units completed')
 
