@@ -34,17 +34,17 @@ std_err = np.array(get_std_errs(inv_hessians))
 # %%
 
 # remove estimates where some parameter = 0
-mask = np.any(params == 0, axis=1)
-final_params = params[~mask]
-final_std_err = std_err[~mask]
+mask1 = np.any(params == 0, axis=1)
+final_params = params[~mask1]
+final_std_err = std_err[~mask1]
 cmap = plt.get_cmap('viridis')
 # remove params with v high std error
-mask = np.any(final_std_err > 20, axis=1)
-final_params = final_params[~mask]
-final_std_err = final_std_err[~mask]
+mask2 = np.any(final_std_err > 20, axis=1)
+final_params = final_params[~mask2]
+final_std_err = final_std_err[~mask2]
 
 # %%
-n_param = 5
+n_param = 4
 param_names = ['discount factor', 'efficacy', 'reward_shirk', 'effort_work',
                'beta']
 x_lim = [None, None, (0, 2), (-2, 0), (0, 10)]
@@ -90,9 +90,29 @@ for i in range(n_param):
     plt.ylabel('frequency')
 
 
+lim = [None, None, (0, 2), (-2, 0), (0, 10)]
 for i in range(n_param):
-    for j in range(i+1, 4):
+    for j in range(i+1, n_param):
         plt.figure(figsize=(4, 4), dpi=300)
         plt.scatter(final_params[:, i+n_param], final_params[:, j+n_param])
         plt.xlabel(param_names[i])
         plt.ylabel(param_names[j])
+        plt.xlim(lim[i])
+        plt.ylim(lim[j])
+
+# %%
+# pairwise covariances between parameters
+final_inv_hessians = inv_hessians[~mask1, :, :]
+final_inv_hessians = final_inv_hessians[~mask2, :, :]
+# remove super huge covariances
+mask3 = np.ones(len(final_inv_hessians), dtype=bool)
+mask3[np.unique(np.where(final_inv_hessians > 10)[0])] = False
+final_inv_hessians = final_inv_hessians[mask3, :, :]
+
+for i in range(n_param-1):
+    cov = final_inv_hessians[:, i, i+1:n_param]
+    plt.figure()
+    plt.violinplot(cov)
+    plt.xticks(np.arange(1, n_param-i),
+               labels=param_names[i+1:n_param])
+    plt.title(param_names[i])
