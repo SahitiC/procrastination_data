@@ -33,14 +33,14 @@ STATES = np.arange(STATES_NO)
 ACTIONS = [np.arange(STATES_NO-i) for i in range(STATES_NO)]
 
 HORIZON = 15  # no. of weeks for task
-DISCOUNT_FACTOR = 0.00157  # discounting factor
-EFFICACY = 0.911  # self-efficacy (probability of progress for each unit)
-
+DISCOUNT_FACTOR = 0.547  # discounting factor
+EFFICACY = 0.908  # self-efficacy (probability of progress for each unit)
+EFFICACY_ACTUAL = 0.523
 # utilities :
 REWARD_THR = 4.0  # reward per unit at threshold (14 units)
 REWARD_EXTRA = REWARD_THR/4  # reward per unit after threshold upto 22 units
-REWARD_SHIRK = 0.000126
-EFFORT_WORK = -0.00188
+REWARD_SHIRK = 0.0
+EFFORT_WORK = -0.110
 
 # %%
 
@@ -67,7 +67,7 @@ V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
     STATES, ACTIONS, HORIZON, DISCOUNT_FACTOR,
     total_reward_func, total_reward_func_last, T)
 
-efficacy_actual = EFFICACY
+efficacy_actual = EFFICACY_ACTUAL
 T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
 
 # initial_state = 0
@@ -77,7 +77,7 @@ T_actual = task_structure.T_binomial(STATES, ACTIONS, efficacy_actual)
 # plt.plot(s, label='deterministic')
 
 initial_state = 0
-beta = 1012.81
+beta = 5
 for i in range(10):
     s, a = mdp_algms.forward_runs_prob(
         softmax_policy, Q_values, ACTIONS, initial_state, HORIZON, STATES,
