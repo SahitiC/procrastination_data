@@ -1,8 +1,10 @@
+import task_structure
+import mdp_algms
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['font.size'] = 16
-mpl.rcParams['lines.linewidth'] = 2
+mpl.rcParams['lines.linewidth'] = 3
 
 # %%
 
@@ -21,18 +23,15 @@ def get_std_errs(inv_hessians):
 
 
 # %%
-params = np.loadtxt('result_beta.csv',
-                    delimiter=',')
-
-# %%
 # load final_params
-result = np.load('result_beta.npy', allow_pickle=True)
+result = np.load('nyx/560311/result.npy', allow_pickle=True)
 params = np.stack(result[:, 0])
 inv_hessians = np.stack(result[:, 1])
 std_err = np.array(get_std_errs(inv_hessians))
 
 # %%
 
+colors = np.array(['tab:blue', 'tab:orange', 'tab:green'])
 # remove estimates where some parameter = 0
 mask1 = np.any(params == 0, axis=1)
 final_params = params[~mask1]
@@ -43,19 +42,22 @@ mask2 = np.any(final_std_err > 20, axis=1)
 final_params = final_params[~mask2]
 final_std_err = final_std_err[~mask2]
 
+
 # %%
 n_param = 4
-param_names = ['discount factor', 'efficacy', 'reward_shirk', 'effort_work',
-               'beta']
-x_lim = [None, None, (0, 2), (-2, 0), (0, 10)]
-y_lim = [(0, 1), (0, 1), (0, 2), (-2, 0), (0, 10)]
-bad = [0.25, 0.25, 0.3, 0.3, 2]
+param_names = ['discount factor', 'efficacy_assumed',
+               'efficacy_actual', 'effort_work']
+x_lim = [None, None, None, (-2, 0)]
+y_lim = [(0, 1), (0, 1), (0, 1), (-2, 0)]
+bad = [0.25, 0.25, 0.25, 0.3]
 markers = np.array(['o', 'x'])
 
+b_fits = []
 for i in range(n_param):
     # mark fits that are especially bad
     bad_fit = np.where(
         np.abs(final_params[:, i] - final_params[:, i+n_param]) > bad[i], 1, 0)
+    b_fits.append(list(bad_fit))
     plt.figure(figsize=(7, 5), dpi=300)
     print(np.sum(bad_fit))
     # separately plot different groups
@@ -66,10 +68,9 @@ for i in range(n_param):
         plt.plot(
             np.linspace(y_lim[i][0], y_lim[i][1], 10),
             np.linspace(y_lim[i][0], y_lim[i][1], 10),
-            linewidth=1, color='black')
+            linewidth=1, color='black')  # x=y line
         plt.xlim(x_lim[i])
         plt.ylim(y_lim[i])
-
     cbar = plt.colorbar()
     cbar.set_label('std error')
     plt.xlabel(f'true {param_names[i]}')
@@ -90,7 +91,7 @@ for i in range(n_param):
     plt.ylabel('frequency')
 
 
-lim = [None, None, (0, 2), (-2, 0), (0, 10)]
+lim = [None, None, None, (-2, 0)]
 for i in range(n_param):
     for j in range(i+1, n_param):
         plt.figure(figsize=(4, 4), dpi=300)
