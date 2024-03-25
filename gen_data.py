@@ -51,8 +51,8 @@ def gen_data_basic(states, actions, horizon, discount_factor, efficacy, beta,
 
 # function to generate a trajctory given parameters using efficacy-gap model
 def gen_data_efficacy_gap(states, actions, horizon, discount_factor,
-                          efficacy_assumed, efficacy_actual, beta, reward_shirk,
-                          effort_work, reward_thr, reward_extra):
+                          efficacy_assumed, efficacy_actual, beta,
+                          reward_shirk, effort_work, reward_thr, reward_extra):
 
     # get reward function
     reward_func = task_structure.reward_no_immediate(
@@ -85,5 +85,42 @@ def gen_data_efficacy_gap(states, actions, horizon, discount_factor,
     s, a = mdp_algms.forward_runs_prob(
         softmax_policy, Q_values, actions, initial_state, horizon, states,
         T_actual, beta)
+
+    return s
+
+
+# function to generate trajectory with non-linear costs (delayed rewards)
+def gen_data_convex_concave(states, actions, horizon, discount_factor,
+                            efficacy, beta, reward_shirk, effort_work,
+                            reward_thr, reward_extra, exponent):
+
+    # get reward function
+    reward_func = task_structure.reward_no_immediate(
+        states, actions, reward_shirk)
+
+    effort_func = task_structure.effort_convex_concave(states, actions,
+                                                       effort_work, exponent)
+
+    total_reward_func_last = task_structure.reward_final(states, reward_thr,
+                                                         reward_extra)
+
+    total_reward_func = []
+    for state_current in range(len(states)):
+
+        total_reward_func.append(reward_func[state_current]
+                                 + effort_func[state_current])
+
+    # get transition function
+    T = task_structure.T_binomial(states, actions, efficacy)
+
+    # get optimal policy according to task structure
+    V_opt, policy_opt, Q_values = mdp_algms.find_optimal_policy_prob_rewards(
+        states, actions, horizon, discount_factor,
+        total_reward_func, total_reward_func_last, T)
+
+    initial_state = 0
+    s, a = mdp_algms.forward_runs_prob(
+        softmax_policy, Q_values, actions, initial_state, horizon, states,
+        T, beta)
 
     return s

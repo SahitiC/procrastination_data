@@ -24,7 +24,7 @@ def get_std_errs(inv_hessians):
 
 # %%
 # load final_params
-result = np.load('nyx/560732/result.npy', allow_pickle=True)
+result = np.load('nyx/560311/result.npy', allow_pickle=True)
 params = np.stack(result[:, 0])
 inv_hessians = np.stack(result[:, 1])
 std_err = np.array(get_std_errs(inv_hessians))
